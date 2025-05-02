@@ -38,7 +38,7 @@ We recommend repeating this study with:
 - `executive-summary.pdf` — Final summary of our findings
 - `PCA_analysis.R` — My contribution (Principal Component Analysis)
 - `team-presentation.pptx` — Group presentation slides
-- `speed_dating_raw.csv` — Cleaned and processed dataset (if available)
+- `speed_dating_raw.csv` — Cleaned and processed dataset 
 
 
 
