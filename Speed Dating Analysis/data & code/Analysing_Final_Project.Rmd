@@ -1,0 +1,169 @@
+---
+title: "DSC 424 Final Project"
+output: html_document
+date: "2024-08-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+install.packages("psych")
+```
+Step 1: Data cleaning and preparation:
+```{r libraries}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(factoextra)
+library(psych)
+```
+
+```{r loading and cleaning}
+spd_dat = read.csv("Speed Dating Data.csv")
+sum(is.na(spd_dat$attr5_3))
+spd_dat %>% count(sinc5_2)
+## Removing variables without enough data points or irrelevant data points
+spd_dat_clean = spd_dat[,-c(1,2,4,37,43,44,123:128,160,161,168:185,191:195)]
+## Removing entries with no data
+spd_dat_clean2 = filter(spd_dat_clean, you_call >=0)
+sum(spd_dat_clean2$income == "")
+sum(is.na(spd_dat_clean2$attr3_3))
+## Removing more variables with insufficient data
+spd_dat_clean3 = spd_dat_clean2 [,-c(6,9,32,34,35,39,43,63,70:75,87:91,102:113,123:134,140:144)]
+#spd_dat_clean %>% count(from)
+sum(is.na(spd_dat_clean3))
+spd_dat_cleanf = na.omit(spd_dat_clean3)
+```
+```{r}
+# save the cleaned data to a new CSV file
+write.csv(spd_dat_cleanf, "Speed_Dating_Data_Cleaned.csv", row.names = FALSE)
+
+```
+```{r}
+#Scale check/ numeric data check
+spd_dat_cleanf = spd_dat_cleanf %>% 
+  select_if(is.numeric) %>% 
+  mutate_if(is.numeric, scale)
+#str(spd_dat_cleanf) #checking data sturcture just to get familiar with what we are working
+summary(spd_dat_cleanf)
+```
+
+```{r}
+#Checking summery of cleanning:
+original_rows = nrow(spd_dat)
+print(paste("Number of rows before cleaning:", original_rows))
+
+cleaned_rows = nrow(spd_dat_cleanf)
+print(paste("Number of rows after cleaning:", cleaned_rows))
+
+rows_removed = original_rows - cleaned_rows
+print(paste("Number of rows removed during cleaning:", rows_removed))
+
+
+```
+
+
+Step 2: Perfoming PCA on the clean data
+
+```{r}
+#PCA
+pca_result = prcomp(spd_dat_cleanf, scale = TRUE)
+print("Summary of PCA results:")
+print(summary(pca_result))
+```
+
+
+```{r}
+# Checkinng variance and cumulative variance
+explained_variance = pca_result$sdev^2 / sum(pca_result$sdev^2)
+cumulative_variance = cumsum(explained_variance)
+
+print("Explained variance by each component:")
+print(explained_variance)
+print("Cumulative variance:")
+print(cumulative_variance)
+
+# Num of components needed to account for 80% of the variance
+num_components = which(cumulative_variance >= 0.80)[1]
+print(paste("Number of components needed to account for 80% of the variance:", num_components))
+```
+Step 3: Interpretation of Components
+
+```{r}
+# Visualization of the results 
+plot(cumulative_variance, type='b', xlab='Number of Components', ylab='Cumulative Variance Explained', main='PCA: Cumulative Variance Explained')
+abline(h=0.80, col="red", lty=2)
+abline(v=num_components, col="blue", lty=2)
+
+
+```
+```{r}
+#loadings of the first component
+loadings = pca_result$rotation
+print("Top contributing variables for the first component:")
+top_contributors = sort(abs(loadings[, 1]), decreasing = TRUE)[1:10]
+print(top_contributors)
+```
+
+```{r}
+#Equation for the first component:
+first_component_equation = paste0("Component 1 = ", paste0(round(loadings[top_contributors, 1], 3), "*", names(top_contributors), collapse = " + "))
+cat("Equation of the first component:\n", first_component_equation, "\n")
+
+```
+
+Step 4: Visual represntation
+
+```{r}
+fviz_pca_var(pca_result, col.var = "contrib", select.var = list(contrib = 10), repel = TRUE) +
+  labs(title = "Top 10 Variables of the First Component")
+```
+
+```{r}
+fviz_screeplot(pca_result, addlabels = TRUE, ylim = c(0, 50)) +
+  labs(title = "Scree Plot")
+```
+
+```{r}
+#too many values a bad example. NOT USING FOR REPORT
+fviz_pca_biplot(pca_result, repel = TRUE) +
+  labs(title = "PCA Biplot of Individuals and Variables")
+```
+
+```{r}
+fviz_contrib(pca_result, choice = "var", axes = 1, top = 10) +
+  labs(title = "Contribution of Variables to the First Component")
+```
+
+```{r}
+fviz_contrib(pca_result, choice = "var", axes = 2, top = 10) +
+  labs(title = "Contribution of Variables to the Second Component")
+```
+
+Step 5: Statistical Interpretation:
+```{r}
+pca_scores = data.frame(pca_result$x)
+
+# 5 summary for each component
+five_number_summary = apply(pca_scores, 2, function(x) {
+  c(Min = min(x), Q1 = quantile(x, 0.25), Median = median(x), Q3 = quantile(x, 0.75), Max = max(x))
+})
+
+print(five_number_summary)
+```
+```{r}
+cat("Component 1 Analysis:\n",
+    "Min:", round(five_number_summary[1, 1], 2),
+    "Q1:", round(five_number_summary[2, 1], 2),
+    "Median:", round(five_number_summary[3, 1], 2),
+    "Q3:", round(five_number_summary[4, 1], 2),
+    "Max:", round(five_number_summary[5, 1], 2), "\n")
+```
+
+Conclusionns:
+```{r}
+cat("The PCA has identified that the most influential factors in determining speed dating outcomes are related to these key variables: ", names(top_contributors), "\n")
+
+```
+
