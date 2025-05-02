@@ -22,11 +22,11 @@ I used Principal Component Analysis to reduce the dimensionality of the data and
 - Correspondence Analysis
 - Ridge Regression
 
-## 📉 Dataset Notes
+##  Dataset Notes
 
 The dataset, collected by Columbia University between 2002–2004, included significant missing data (75% incomplete). This limited the variables we could use and affected the generalizability of the findings to modern dating contexts.
 
-## 💡 Future Work
+##  Future Work
 
 We recommend repeating this study with:
 - Updated and more complete datasets
